@@ -1,0 +1,198 @@
+// Backend'dagi enum va DTO shakllariga mos keladigan turlar
+// (src/*/entities/*.ts va src/*/dto/*.ts fayllariga qarang).
+
+export enum BusinessType {
+  YATT = 'yakka_tartibdagi_tadbirkor',
+  MCHJ = 'mchj',
+  FERMER = 'fermer_xojaligi',
+  BOSHQA = 'boshqa',
+}
+
+export const BUSINESS_TYPE_LABELS: Record<BusinessType, string> = {
+  [BusinessType.YATT]: 'Yakka tartibdagi tadbirkor',
+  [BusinessType.MCHJ]: 'MCHJ',
+  [BusinessType.FERMER]: 'Fermer xo‘jaligi',
+  [BusinessType.BOSHQA]: 'Boshqa',
+};
+
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  phone?: string | null;
+  companyName?: string | null;
+  businessType: BusinessType;
+  role: 'user' | 'admin';
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export enum PaymentMethod {
+  ANNUITET = 'annuitet',
+  DIFFERENSIAL = 'differensial',
+}
+
+export interface ScheduleRow {
+  month: number;
+  payment: number;
+  principal: number;
+  interest: number;
+  remainingBalance: number;
+}
+
+export interface LoanResult {
+  loanAmount: number;
+  annualRate: number;
+  termMonths: number;
+  paymentMethod: PaymentMethod;
+  monthlyPayment: number | null;
+  firstPayment?: number;
+  lastPayment?: number;
+  totalPayment: number;
+  totalInterest: number;
+  schedule: ScheduleRow[];
+}
+
+export enum TaxpayerType {
+  YAGONA_SOLIQ = 'yagona_soliq',
+  QQS_TOLOVCHI = 'qqs_tolovchi',
+  YATT_QATIY = 'yatt_qatiy_belgilangan',
+}
+
+export const TAXPAYER_TYPE_LABELS: Record<TaxpayerType, string> = {
+  [TaxpayerType.YAGONA_SOLIQ]: 'Yagona soliq (aylanmadan)',
+  [TaxpayerType.QQS_TOLOVCHI]: "Umumbelgilangan tartib (QQS + foyda solig'i)",
+  [TaxpayerType.YATT_QATIY]: "YATT — qat'iy belgilangan soliq",
+};
+
+export interface TaxResult {
+  taxpayerType: TaxpayerType;
+  annualRevenue: number;
+  breakdown: Record<string, number>;
+  totalAnnualTax: number;
+  totalMonthlyTax: number;
+  effectiveRate: number;
+  notes: string[];
+  disclaimer: string;
+}
+
+export interface BusinessPlanFinancials {
+  initialInvestment: number;
+  monthlyExpenses: number;
+  expectedMonthlyRevenue: number;
+  breakEvenMonths: number;
+  notes: string;
+}
+
+export interface BusinessPlanContent {
+  executiveSummary: string;
+  businessDescription: string;
+  marketAnalysis: string;
+  targetAudience: string;
+  marketingStrategy: string;
+  operationalPlan: string;
+  financialPlan: BusinessPlanFinancials;
+  risks: string[];
+  recommendations: string[];
+  disclaimer?: string;
+}
+
+export interface BusinessPlan {
+  id: string;
+  title: string;
+  industry: string;
+  content: BusinessPlanContent;
+  initialInvestment: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketAnalysisResult {
+  industry: string;
+  location: string;
+  generatedAt: string;
+  marketOverview: string;
+  estimatedMarketSize: string;
+  competitors: string[];
+  customerSegments: string[];
+  swot: {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+    threats: string[];
+  };
+  entryBarriers: string[];
+  recommendations: string[];
+  disclaimer?: string;
+}
+
+export enum TransactionType {
+  INCOME = 'income',
+  EXPENSE = 'expense',
+}
+
+export const INCOME_CATEGORIES = [
+  'Savdo daromadi',
+  "Xizmat ko‘rsatish",
+  'Ijara daromadi',
+  'Boshqa daromad',
+];
+
+export const EXPENSE_CATEGORIES = [
+  "Ijara to‘lovi",
+  'Xodimlar maoshi',
+  'Tovar-xomashyo',
+  'Kommunal xizmatlar',
+  'Transport',
+  'Reklama',
+  "Soliq to‘lovi",
+  'Boshqa xarajat',
+];
+
+export interface Transaction {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  category: string;
+  note?: string | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export type StatsPeriod = 'today' | 'week' | 'month' | 'all';
+
+export interface CategoryBreakdown {
+  category: string;
+  amount: number;
+  count: number;
+}
+
+export interface PeriodSummary {
+  period: StatsPeriod;
+  periodLabel: string;
+  from: string;
+  to: string;
+  totalIncome: number;
+  totalExpense: number;
+  net: number;
+  transactionCount: number;
+  incomeByCategory: CategoryBreakdown[];
+  expenseByCategory: CategoryBreakdown[];
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt?: string;
+}
+
+export interface ChatResponse {
+  conversationId: string;
+  reply: string;
+}
