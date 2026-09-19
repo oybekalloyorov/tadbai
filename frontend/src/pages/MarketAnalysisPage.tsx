@@ -79,6 +79,34 @@ export default function MarketAnalysisPage() {
             </p>
           </div>
 
+          {result.dataSources && result.dataSources.length > 0 && (
+            <div className="card">
+              <h3>✅ Tasdiqlangan manbalar</h3>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: -6 }}>
+                Bu tahlilda quyidagi rasmiy manbalardagi haqiqiy raqamlar ishlatildi —
+                bular AI taxmini emas.
+              </p>
+              <ul>
+                {result.dataSources.map((ds, i) => (
+                  <li key={i}>
+                    <b>{ds.label}</b> — {ds.source}
+                    {ds.sourceUrl && (
+                      <>
+                        {' '}
+                        (
+                        <a href={ds.sourceUrl} target="_blank" rel="noopener noreferrer">
+                          {ds.sourceUrl}
+                        </a>
+                        )
+                      </>
+                    )}
+                    <span style={{ color: 'var(--text-muted)' }}> — {ds.dataAsOf} holatiga</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="grid grid-2">
             <div className="card">
               <h3>Raqobatchilar</h3>

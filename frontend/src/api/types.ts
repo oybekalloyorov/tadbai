@@ -113,6 +113,13 @@ export interface BusinessPlan {
   updatedAt: string;
 }
 
+export interface MarketDataSource {
+  label: string;
+  source: string;
+  sourceUrl: string | null;
+  dataAsOf: string;
+}
+
 export interface MarketAnalysisResult {
   industry: string;
   location: string;
@@ -129,6 +136,7 @@ export interface MarketAnalysisResult {
   };
   entryBarriers: string[];
   recommendations: string[];
+  dataSources?: MarketDataSource[];
   disclaimer?: string;
 }
 
