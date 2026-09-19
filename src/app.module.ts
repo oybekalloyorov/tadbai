@@ -17,6 +17,7 @@ import { AiModule } from './common/ai/ai.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AdminModule } from './admin/admin.module';
+import { BankOffersModule } from './bank-offers/bank-offers.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AdminModule } from './admin/admin.module';
     TelegramModule,
     TransactionsModule,
     AdminModule,
+    BankOffersModule,
   ],
   providers: [
     {

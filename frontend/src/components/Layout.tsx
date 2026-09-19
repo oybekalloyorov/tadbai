@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: '/', label: '📊 Bosh sahifa', end: true },
   { to: '/transactions', label: '💰 Kirim-chiqim' },
   { to: '/loan-calculator', label: '🏦 Kredit kalkulyatori' },
+  { to: '/bank-offers', label: '🏦 Bank takliflari' },
   { to: '/tax-calculator', label: '🧾 Soliq kalkulyatori' },
   { to: '/business-plan', label: '📋 Biznes-reja' },
   { to: '/market-analysis', label: '📈 Bozor tahlili' },

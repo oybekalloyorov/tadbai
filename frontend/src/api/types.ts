@@ -257,3 +257,25 @@ export interface AdminUserDetail {
   };
   recentTransactions: Transaction[];
 }
+
+// ---------- Bank takliflari (bank.uz) ----------
+
+export interface BankCreditOffer {
+  id: string;
+  bankName: string;
+  productName: string;
+  imageUrl: string | null;
+  interestRate: string;
+  term: string;
+  downPayment: string;
+  amount: string;
+  badges: string[];
+  detailUrl: string | null;
+}
+
+export interface BankCreditOffersResult {
+  offers: BankCreditOffer[];
+  page: number;
+  totalPages: number;
+  fetchedAt: string;
+}

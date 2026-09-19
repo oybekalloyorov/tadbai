@@ -14,6 +14,7 @@ import ChatPage from './pages/ChatPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import BankOffersPage from './pages/BankOffersPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/" element={<Protected><DashboardPage /></Protected>} />
       <Route path="/transactions" element={<Protected><TransactionsPage /></Protected>} />
       <Route path="/loan-calculator" element={<Protected><LoanCalculatorPage /></Protected>} />
+      <Route path="/bank-offers" element={<Protected><BankOffersPage /></Protected>} />
       <Route path="/tax-calculator" element={<Protected><TaxCalculatorPage /></Protected>} />
       <Route path="/business-plan" element={<Protected><BusinessPlanPage /></Protected>} />
       <Route path="/market-analysis" element={<Protected><MarketAnalysisPage /></Protected>} />

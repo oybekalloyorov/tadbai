@@ -3,6 +3,7 @@ import {
   AdminDashboardStats,
   AdminUserDetail,
   AuthResponse,
+  BankCreditOffersResult,
   BusinessPlan,
   ChatResponse,
   LoanResult,
@@ -191,4 +192,13 @@ export const adminApi = {
   updateRole: (id: string, role: 'user' | 'admin') =>
     api.patch(`/admin/users/${id}/role`, { role }).then((r) => r.data),
   removeUser: (id: string) => api.delete(`/admin/users/${id}`).then((r) => r.data),
+};
+
+// ---------- Bank takliflari (bank.uz) ----------
+
+export const bankOffersApi = {
+  credits: (page = 1) =>
+    api
+      .get<BankCreditOffersResult>('/bank-offers/credits', { params: { page } })
+      .then((r) => r.data),
 };
