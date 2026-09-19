@@ -1,6 +1,13 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import * as cheerio from 'cheerio';
 
+export type BankOfferCategory =
+  | 'biznes'
+  | 'avtokredit'
+  | 'ipoteka'
+  | 'mikroqarz'
+  | 'boshqa';
+
 export interface BankCreditOffer {
   id: string;
   bankName: string;
@@ -12,6 +19,13 @@ export interface BankCreditOffer {
   amount: string;
   badges: string[];
   detailUrl: string | null;
+  // Filtrlash uchun matndan ajratib olingan raqamli/qisqacha qiymatlar
+  // (asl matn maydonlari yuqorida saqlanib qoladi — ular hech qachon
+  // o'chirilmaydi, faqat filtr uchun qo'shimcha maydonlar qo'shiladi).
+  category: BankOfferCategory;
+  amountMaxSom: number | null;
+  termMaxMonths: number | null;
+  interestRateValue: number | null;
 }
 
 export interface BankCreditOffersResult {
@@ -139,6 +153,10 @@ export class BankOffersService {
         amount: amount || '-',
         badges,
         detailUrl,
+        category: this.detectCategory(productName, bankName),
+        amountMaxSom: this.extractMaxNumber(amount),
+        termMaxMonths: this.parseTermToMonths(term),
+        interestRateValue: this.extractFirstNumber(interestRate),
       });
     });
 
@@ -157,5 +175,86 @@ export class BankOffersService {
       totalPages,
       fetchedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Mahsulot/bank nomidagi kalit so'zlar asosida taklifni tadbirkorga
+   * mos kategoriyalarga ajratadi. bank.uz kartalarida alohida "biznes"
+   * bayrog'i bo'lmagani uchun bu taxminiy (heuristik) ajratish — asl
+   * matnlar (productName, bankName) har doim saqlanib qoladi.
+   */
+  private detectCategory(productName: string, bankName: string): BankOfferCategory {
+    const text = `${productName} ${bankName}`.toLowerCase();
+
+    if (
+      text.includes('biznes') ||
+      text.includes('tadbirkor') ||
+      text.includes('korxona') ||
+      text.includes('yuridik') ||
+      text.includes('mchj') ||
+      text.includes('startup')
+    ) {
+      return 'biznes';
+    }
+    if (text.includes('avtokredit') || text.includes('avto')) {
+      return 'avtokredit';
+    }
+    if (text.includes('ipoteka') || text.includes('uy-joy') || text.includes('uyjoy')) {
+      return 'ipoteka';
+    }
+    if (text.includes('mikroqarz') || text.includes('nasiya') || text.includes('kredit kartasi')) {
+      return 'mikroqarz';
+    }
+    return 'boshqa';
+  }
+
+  /**
+   * "25 000 000 so'mgacha" -> 25000000
+   * "1 000 000dan - 100 000 000 so'mgacha" -> 100000000 (eng katta qiymat)
+   * Raqam topilmasa null qaytaradi.
+   */
+  private extractMaxNumber(text: string): number | null {
+    const matches = text.match(/[\d]{1,3}(?:[\s.,]\d{3})*/g);
+    if (!matches) return null;
+
+    const numbers = matches
+      .map((m) => parseInt(m.replace(/[\s.,]/g, ''), 10))
+      .filter((n) => !isNaN(n) && n > 0);
+
+    if (numbers.length === 0) return null;
+    return Math.max(...numbers);
+  }
+
+  /**
+   * Matndagi birinchi (butun yoki kasr) raqamni qaytaradi.
+   * "28 % dan" -> 28, "0.15 в день %" -> 0.15
+   */
+  private extractFirstNumber(text: string): number | null {
+    const match = text.match(/\d+(?:[.,]\d+)?/);
+    if (!match) return null;
+    const value = parseFloat(match[0].replace(',', '.'));
+    return isNaN(value) ? null : value;
+  }
+
+  /**
+   * "1 yil", "1 yil - 3 yil", "3 oy - 5 yil" kabi matnlardan eng katta
+   * muddatni oylarda hisoblab qaytaradi ("yil" -> *12, "oy" -> *1).
+   */
+  private parseTermToMonths(text: string): number | null {
+    const regex = /(\d+(?:[.,]\d+)?)\s*(yil|oy)/gi;
+    let match: RegExpExecArray | null;
+    let maxMonths: number | null = null;
+
+    while ((match = regex.exec(text)) !== null) {
+      const value = parseFloat(match[1].replace(',', '.'));
+      if (isNaN(value)) continue;
+      const unit = match[2].toLowerCase();
+      const months = unit === 'yil' ? value * 12 : value;
+      if (maxMonths === null || months > maxMonths) {
+        maxMonths = months;
+      }
+    }
+
+    return maxMonths;
   }
 }

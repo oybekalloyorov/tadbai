@@ -260,6 +260,21 @@ export interface AdminUserDetail {
 
 // ---------- Bank takliflari (bank.uz) ----------
 
+export type BankOfferCategory =
+  | 'biznes'
+  | 'avtokredit'
+  | 'ipoteka'
+  | 'mikroqarz'
+  | 'boshqa';
+
+export const BANK_OFFER_CATEGORY_LABELS: Record<BankOfferCategory, string> = {
+  biznes: 'Biznes uchun',
+  avtokredit: 'Avtokredit',
+  ipoteka: 'Ipoteka',
+  mikroqarz: "Mikroqarz / naqd kredit",
+  boshqa: 'Boshqa',
+};
+
 export interface BankCreditOffer {
   id: string;
   bankName: string;
@@ -271,6 +286,10 @@ export interface BankCreditOffer {
   amount: string;
   badges: string[];
   detailUrl: string | null;
+  category: BankOfferCategory;
+  amountMaxSom: number | null;
+  termMaxMonths: number | null;
+  interestRateValue: number | null;
 }
 
 export interface BankCreditOffersResult {
