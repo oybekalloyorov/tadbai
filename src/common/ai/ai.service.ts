@@ -116,6 +116,7 @@ export class AiService {
   ): Promise<T> {
     return this.withProviderFallback(async (provider) => {
       let raw: string;
+      let finishReason: string | undefined;
 
       try {
         const completion = await provider.client.chat.completions.create({
@@ -126,9 +127,15 @@ export class AiService {
           ],
           temperature: 0.3,
           response_format: { type: 'json_object' },
-          max_tokens: 900,
+          // DIQQAT: biznes-reja/bozor-tahlili kabi JSON javoblar bir nechta
+          // uzun matn maydonidan (executiveSummary, marketAnalysis va h.k.)
+          // iborat bo'lgani uchun 900 token juda kam edi — javob o'rtada
+          // kesilib, "Unterminated string in JSON" xatosiga olib kelardi.
+          // Shuning uchun bu yerda ancha kattaroq chegara beramiz.
+          max_tokens: 3000,
         });
         raw = completion.choices[0]?.message?.content || '{}';
+        finishReason = completion.choices[0]?.finish_reason;
       } catch (formatError) {
         this.logger.warn(
           `${provider.name}: response_format (json_object) qoʻllab-quvvatlanmadi, oddiy matn rejimiga oʻtildi. (${(formatError as Error).message})`,
@@ -144,12 +151,39 @@ export class AiService {
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.3,
-          max_tokens: 900,
+          max_tokens: 3000,
         });
         raw = completion.choices[0]?.message?.content || '{}';
+        finishReason = completion.choices[0]?.finish_reason;
       }
 
-      return JSON.parse(this.extractJson(raw)) as T;
+      // Model javobni token chegarasi tufayli o'rtada to'xtatgan bo'lsa,
+      // JSON deyarli har doim tugallanmagan bo'ladi — buni JSON.parse'ga
+      // yuborishdan oldinoq aniq xato sifatida belgilaymiz, shunda
+      // withProviderFallback keyingi provayderga tezroq o'tadi.
+      if (finishReason === 'length') {
+        throw new Error(
+          "Javob max_tokens chegarasida kesildi (finish_reason=length) — JSON tugallanmagan bo'lishi mumkin",
+        );
+      }
+
+      const parsed = JSON.parse(this.extractJson(raw)) as T;
+
+      // Ba'zan JSON ichidan tasodifiy bo'sh "{}" juftlik topilib, xatosiz
+      // parse bo'lib ketishi mumkin (haqiqiy kontent yo'q holda). Bunday
+      // "muvaffaqiyatli, lekin bo'sh" natijani ham xato deb hisoblaymiz —
+      // aks holda foydalanuvchiga bo'sh biznes-reja saqlanib qoladi.
+      if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        Object.keys(parsed as object).length === 0
+      ) {
+        throw new Error(
+          "AI bo'sh yoki noto'liq JSON qaytardi (extractJson bo'sh {} topdi)",
+        );
+      }
+
+      return parsed;
     }, 'generateJson');
   }
 
