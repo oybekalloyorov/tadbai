@@ -10,16 +10,29 @@ export default () => ({
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
 
+  // MUHIM: OPENAI_API_KEY bir nechta kalitni vergul bilan ajratib qabul
+  // qiladi (masalan, bir nechta Gemini/Groq akkaunt kaliti): "key1,key2,key3".
+  // Bitta kalit limitga (429) tushsa, AiService navbatdagi kalitga (xuddi
+  // boshqa "akkaunt"ga o'tgandek) avtomatik o'tadi. Bitta kalit yozsangiz
+  // ham hech narsa o'zgarmaydi — oddiy holatda ishlayveradi.
   openai: {
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKeys: (process.env.OPENAI_API_KEY || '')
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean),
     model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
   },
 
-  // Zaxira (fallback) AI provayder — asosiysi ishlamay qolsa avtomatik
-  // shunga o'tiladi. Ixtiyoriy: AI_FALLBACK_API_KEY bo'sh bo'lsa ishlatilmaydi.
+  // Zaxira (fallback) AI provayder — asosiysi (barcha kalitlari bilan)
+  // ishlamay qolsa avtomatik shunga o'tiladi. Bu ham bir nechta kalitni
+  // (vergul bilan ajratilgan) qo'llab-quvvatlaydi. Ixtiyoriy: bo'sh bo'lsa
+  // ishlatilmaydi.
   aiFallback: {
-    apiKey: process.env.AI_FALLBACK_API_KEY,
+    apiKeys: (process.env.AI_FALLBACK_API_KEY || '')
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean),
     model: process.env.AI_FALLBACK_MODEL || 'gpt-4o-mini',
     baseUrl: process.env.AI_FALLBACK_BASE_URL,
   },

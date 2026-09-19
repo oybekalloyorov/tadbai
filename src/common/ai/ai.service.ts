@@ -26,29 +26,25 @@ export class AiService {
   private readonly providers: AiProvider[] = [];
 
   constructor(private readonly configService: ConfigService) {
-    const primaryKey = this.configService.get<string>('openai.apiKey');
-    if (primaryKey) {
-      this.providers.push({
-        name: 'asosiy',
-        client: new OpenAI({
-          apiKey: primaryKey,
-          baseURL: this.configService.get<string>('openai.baseUrl'),
-        }),
-        model: this.configService.get<string>('openai.model') || 'gpt-4o-mini',
-      });
-    }
+    // MUHIM: har bir provayder guruhi (asosiy/zaxira) bir nechta API
+    // kalitni (masalan, bir nechta Gemini yoki Groq akkaunt) qo'llab-
+    // quvvatlaydi. Har bir kalit uchun alohida "provider" yozuvi
+    // yaratiladi, shuning uchun bittasi kunlik/daqiqalik limitga (429)
+    // tushsa, withProviderFallback avtomatik ravishda navbatdagi kalitga
+    // (boshqa akkauntga o'tgandek) o'tadi.
+    this.registerProviderGroup(
+      'asosiy',
+      this.configService.get<string[]>('openai.apiKeys') || [],
+      this.configService.get<string>('openai.baseUrl'),
+      this.configService.get<string>('openai.model') || 'gpt-4o-mini',
+    );
 
-    const fallbackKey = this.configService.get<string>('aiFallback.apiKey');
-    if (fallbackKey) {
-      this.providers.push({
-        name: 'zaxira',
-        client: new OpenAI({
-          apiKey: fallbackKey,
-          baseURL: this.configService.get<string>('aiFallback.baseUrl'),
-        }),
-        model: this.configService.get<string>('aiFallback.model') || 'gpt-4o-mini',
-      });
-    }
+    this.registerProviderGroup(
+      'zaxira',
+      this.configService.get<string[]>('aiFallback.apiKeys') || [],
+      this.configService.get<string>('aiFallback.baseUrl'),
+      this.configService.get<string>('aiFallback.model') || 'gpt-4o-mini',
+    );
 
     if (this.providers.length === 0) {
       this.logger.warn(
@@ -63,6 +59,28 @@ export class AiService {
   }
 
   /**
+   * Bitta guruh (asosiy yoki zaxira) uchun bir nechta API kalitni alohida
+   * provayder sifatida ro'yxatdan o'tkazadi. Masalan, `apiKeys` ["k1","k2"]
+   * bo'lsa, "asosiy-1" va "asosiy-2" nomli ikkita mustaqil provayder
+   * yaratiladi — ular navbat bilan sinab ko'riladi.
+   */
+  private registerProviderGroup(
+    groupName: string,
+    apiKeys: string[],
+    baseUrl: string | undefined,
+    model: string,
+  ): void {
+    apiKeys.forEach((apiKey, index) => {
+      const name = apiKeys.length > 1 ? `${groupName}-${index + 1}` : groupName;
+      this.providers.push({
+        name,
+        client: new OpenAI({ apiKey, baseURL: baseUrl }),
+        model,
+      });
+    });
+  }
+
+  /**
    * Erkin suhbat: berilgan xabarlar tarixi asosida AI javobini qaytaradi.
    */
   async chat(messages: ChatTurn[], temperature = 0.4): Promise<string> {
@@ -71,6 +89,12 @@ export class AiService {
         model: provider.model,
         messages,
         temperature,
+        // DIQQAT: max_tokens ko'rsatilmasa, ba'zi provayderlar (masalan
+        // Groq) modelning standart (juda katta) chiqish limitidan
+        // foydalanadi va bepul tarifning "daqiqada chiqish tokeni" (OTPM)
+        // chegarasidan (odatda ~1000) oshib, 429 xatosini qaytaradi.
+        // Shuning uchun oqilona chegarani o'zimiz belgilaymiz.
+        max_tokens: 700,
       });
 
       return (
@@ -102,6 +126,7 @@ export class AiService {
           ],
           temperature: 0.3,
           response_format: { type: 'json_object' },
+          max_tokens: 900,
         });
         raw = completion.choices[0]?.message?.content || '{}';
       } catch (formatError) {
@@ -119,6 +144,7 @@ export class AiService {
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.3,
+          max_tokens: 900,
         });
         raw = completion.choices[0]?.message?.content || '{}';
       }
