@@ -18,6 +18,14 @@ export enum BusinessType {
   BOSHQA = 'boshqa',
 }
 
+// Admin panelda "foydalanuvchi qaysi platformadan foydalanmoqda" degan
+// savolga javob berish uchun. Bitta foydalanuvchi ikkalasidan ham (Telegram
+// bot VA veb-sayt) foydalanishi mumkin — shuning uchun bu ikkita alohida
+// maydon (`hasWebLogin` va `telegramChatId` mavjudligi) bilan aniqlanadi,
+// `lastPlatform` esa foydalanuvchi ENG OXIRGI marta qaysi platformadan
+// foydalanganini bildiradi.
+export type Platform = 'web' | 'telegram';
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -63,6 +71,20 @@ export class User {
 
   @Column({ type: 'varchar', name: 'telegram_username', nullable: true })
   telegramUsername: string | null;
+
+  // Admin panel uchun platforma statistikasi (yuqoridagi izohga qarang).
+  @Column({ name: 'has_web_login', default: false })
+  hasWebLogin: boolean;
+
+  @Column({
+    type: 'varchar',
+    name: 'last_platform',
+    nullable: true,
+  })
+  lastPlatform: Platform | null;
+
+  @Column({ type: 'timestamptz', name: 'last_seen_at', nullable: true })
+  lastSeenAt: Date | null;
 
   @OneToMany(() => BusinessPlan, (plan) => plan.user)
   businessPlans: BusinessPlan[];

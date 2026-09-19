@@ -1,12 +1,16 @@
 import { api } from './client';
 import {
+  AdminDashboardStats,
+  AdminUserDetail,
   AuthResponse,
   BusinessPlan,
   ChatResponse,
   LoanResult,
   MarketAnalysisResult,
+  PaginatedUsers,
   PaymentMethod,
   PeriodSummary,
+  PlatformFilter,
   StatsPeriod,
   TaxResult,
   TaxpayerType,
@@ -163,4 +167,28 @@ export const transactionsApi = {
     api
       .get<Transaction[]>('/transactions/recent', { params: { limit } })
       .then((r) => r.data),
+};
+
+// ---------- Admin ----------
+
+export interface AdminUsersQuery {
+  search?: string;
+  platform?: PlatformFilter;
+  businessType?: string;
+  status?: 'active' | 'blocked';
+  page?: number;
+  limit?: number;
+}
+
+export const adminApi = {
+  stats: () => api.get<AdminDashboardStats>('/admin/stats').then((r) => r.data),
+  users: (query: AdminUsersQuery) =>
+    api.get<PaginatedUsers>('/admin/users', { params: query }).then((r) => r.data),
+  userDetail: (id: string) =>
+    api.get<AdminUserDetail>(`/admin/users/${id}`).then((r) => r.data),
+  updateStatus: (id: string, isActive: boolean) =>
+    api.patch(`/admin/users/${id}/status`, { isActive }).then((r) => r.data),
+  updateRole: (id: string, role: 'user' | 'admin') =>
+    api.patch(`/admin/users/${id}/role`, { role }).then((r) => r.data),
+  removeUser: (id: string) => api.delete(`/admin/users/${id}`).then((r) => r.data),
 };

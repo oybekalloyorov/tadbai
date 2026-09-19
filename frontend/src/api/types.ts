@@ -196,3 +196,64 @@ export interface ChatResponse {
   conversationId: string;
   reply: string;
 }
+
+// ---------- Admin panel ----------
+
+export type PlatformFilter = 'web' | 'telegram' | 'both' | 'none';
+
+export interface AdminUser extends User {
+  hasWebLogin: boolean;
+  telegramChatId: string | null;
+  telegramUsername: string | null;
+  lastPlatform: 'web' | 'telegram' | null;
+  lastSeenAt: string | null;
+}
+
+export interface PaginatedUsers {
+  items: AdminUser[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminDashboardStats {
+  users: {
+    total: number;
+    web: number;
+    telegram: number;
+    both: number;
+    webOnly: number;
+    telegramOnly: number;
+    blocked: number;
+    admins: number;
+    newToday: number;
+    newThisWeek: number;
+    activeToday: number;
+    activeThisWeek: number;
+  };
+  businessTypeBreakdown: { businessType: BusinessType; count: number }[];
+  activity: {
+    totalTransactions: number;
+    totalIncome: number;
+    totalExpense: number;
+    totalBusinessPlans: number;
+    totalLoanCalculations: number;
+    totalChatConversations: number;
+  };
+  generatedAt: string;
+}
+
+export interface AdminUserDetail {
+  user: AdminUser;
+  stats: {
+    totalIncome: number;
+    totalExpense: number;
+    transactionCount: number;
+    businessPlansCount: number;
+    loanCalculationsCount: number;
+    chatConversations: number;
+    chatMessages: number;
+  };
+  recentTransactions: Transaction[];
+}

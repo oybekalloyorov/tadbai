@@ -7,10 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { BusinessType, User } from '../common/entities/user.entity';
+import { BusinessType, Platform, User } from '../common/entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
 
 @Injectable()
 export class UsersService {
@@ -112,5 +111,35 @@ export class UsersService {
     });
 
     return this.usersRepository.save(user);
+  }
+
+  /**
+   * Admin panelda "foydalanuvchi qaysi platformadan foydalanmoqda" degan
+   * savolga javob berish uchun. `web` — sayt orqali kirish/ro'yxatdan
+   * o'tish, `telegram` — bot orqali xabar yuborish. Ortiqcha DB yozuvlarini
+   * kamaytirish uchun faqat oxirgi faollik 5 daqiqadan eski bo'lsa (yoki
+   * umuman bo'lmasa) yangilanadi.
+   */
+  async markPlatformActivity(userId: string, platform: Platform): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) return;
+
+    const now = new Date();
+    const shouldUpdate =
+      !user.lastSeenAt || now.getTime() - user.lastSeenAt.getTime() > 5 * 60 * 1000;
+
+    if (!shouldUpdate && user.lastPlatform === platform) {
+      // Faollik yaqinda qayd etilgan va platforma o'zgarmagan — DB'ga
+      // ortiqcha yozuv shart emas.
+      return;
+    }
+
+    user.lastPlatform = platform;
+    user.lastSeenAt = now;
+    if (platform === 'web') {
+      user.hasWebLogin = true;
+    }
+
+    await this.usersRepository.save(user);
   }
 }

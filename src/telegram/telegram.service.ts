@@ -100,11 +100,12 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
     // qulatmaydi.
     this.bot.use(async (ctx, next) => {
       const chatId = ctx.chat?.id;
+      const cachedUserId = chatId ? getCachedUserId(chatId) : undefined;
 
       // DIQQAT: keshda allaqachon mavjud bo'lsa, har bir yangilanishda
       // bazaga ortiqcha (keraksiz) so'rov yubormaslik uchun qayta lookup
       // qilmaymiz.
-      if (chatId && !getCachedUserId(chatId)) {
+      if (chatId && !cachedUserId) {
         try {
           const fullName =
             [ctx.from?.first_name, ctx.from?.last_name]
@@ -143,6 +144,22 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
         }
       }
 
+      // Admin panelda "kim qaysi platformadan foydalanmoqda" statistikasi
+      // uchun. `markPlatformActivity` ichida allaqachon 5 daqiqalik
+      // "throttle" bor, shuning uchun bu yerda har bir xabarda chaqirilsa
+      // ham bazaga ortiqcha yuklama tushmaydi. Botning javob berish
+      // tezligiga ta'sir qilmasligi uchun kutilmaydi (fire-and-forget).
+      const finalUserId = cachedUserId || (chatId ? getCachedUserId(chatId) : undefined);
+      if (finalUserId) {
+        this.usersService
+          .markPlatformActivity(finalUserId, 'telegram')
+          .catch((error) =>
+            this.logger.warn(
+              `Platforma faolligini belgilashda xatolik: ${(error as Error)?.message}`,
+            ),
+          );
+      }
+
       return next();
     });
 
@@ -174,17 +191,6 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
     this.launchWithRetry();
   }
 
-  /**
-   * BUG FIX: ilgari bot.launch() bitta marta chaqirilardi — agar shu payt
-   * api.telegram.org'ga tarmoq darajasida ulanib bo'lmasa (internet uzilishi,
-   * provayder Telegramni bloklashi/sekinlashtirishi, DNS muammosi va h.k.,
-   * masalan "FetchError: request to https://api.telegram.org/... failed"),
-   * bot butunlay ishga tushmay qolardi va serverni qoʻlda qayta ishga
-   * tushirishga toʻgʻri kelardi (HTTP API oʻzi ishlayverardi, faqat bot
-   * ishlamasdi). Endi bunday vaqtinchalik tarmoq xatoliklarida bot
-   * eksponensial oraliq bilan (5s, 10s, 20s... maksimum 60s) avtomatik
-   * qayta urinadi — qo'lda aralashuvsiz tiklanadi.
-   */
   private launchWithRetry(attempt = 1): void {
     if (!this.bot) {
       return;
@@ -209,12 +215,6 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
   }
 
   onApplicationShutdown(signal?: string): void {
-    // BUG FIX: agar ilova bot.launch() polling'ni to'liq boshlab ulgurmasdan
-    // qayta ishga tushirilsa (masalan watch-mode qayta kompilyatsiya paytida),
-    // Telegraf hali "ishga tushmagan" bot uchun stop() chaqirilganda
-    // "Error: Bot is not running!" xatoligini tashlaydi. Bu xatolik
-    // zararsiz (ilova baribir qayta ishga tushadi), lekin konsolni
-    // chalkashtiradi — shuning uchun uni jim yutib yuboramiz.
     if (this.bot) {
       try {
         this.bot.stop(signal);

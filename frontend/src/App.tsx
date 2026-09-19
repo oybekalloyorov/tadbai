@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -11,11 +12,23 @@ import MarketAnalysisPage from './pages/MarketAnalysisPage';
 import TransactionsPage from './pages/TransactionsPage';
 import ChatPage from './pages/ChatPage';
 import ProfilePage from './pages/ProfilePage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
       <Layout>{children}</Layout>
+    </ProtectedRoute>
+  );
+}
+
+function Admin({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <AdminRoute>
+        <Layout>{children}</Layout>
+      </AdminRoute>
     </ProtectedRoute>
   );
 }
@@ -34,6 +47,9 @@ export default function App() {
       <Route path="/market-analysis" element={<Protected><MarketAnalysisPage /></Protected>} />
       <Route path="/chat" element={<Protected><ChatPage /></Protected>} />
       <Route path="/profile" element={<Protected><ProfilePage /></Protected>} />
+
+      <Route path="/admin" element={<Admin><AdminDashboardPage /></Admin>} />
+      <Route path="/admin/users" element={<Admin><AdminUsersPage /></Admin>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

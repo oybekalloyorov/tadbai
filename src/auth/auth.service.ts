@@ -15,10 +15,14 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto) {
     const user = await this.usersService.create(registerDto);
+    // Admin panelda "qaysi platformadan foydalanmoqda" statistikasi uchun:
+    // ro'yxatdan o'tish veb-sayt orqali sodir bo'lgani uchun uni "web"
+    // platformasi sifatida belgilaymiz.
+    await this.usersService.markPlatformActivity(user.id, 'web');
     return this.buildAuthResponse(user);
   }
 
@@ -40,6 +44,8 @@ export class AuthService {
     if (!user.isActive) {
       throw new UnauthorizedException('Akkaunt bloklangan. Admin bilan bogʻlaning');
     }
+
+    await this.usersService.markPlatformActivity(user.id, 'web');
 
     return this.buildAuthResponse(user);
   }

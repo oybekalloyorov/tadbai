@@ -39,6 +39,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {item.label}
           </NavLink>
         ))}
+        {user?.role === 'admin' && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            style={{ marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 18 }}
+          >
+            🛠️ Admin panel
+          </NavLink>
+        )}
         <div className="sidebar-footer">
           <div style={{ fontSize: 13, marginBottom: 10 }}>
             {user?.fullName}

@@ -16,6 +16,7 @@ import { ChatModule } from './chat/chat.module';
 import { AiModule } from './common/ai/ai.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     AiModule,
     TelegramModule,
     TransactionsModule,
+    AdminModule,
   ],
   providers: [
     {
